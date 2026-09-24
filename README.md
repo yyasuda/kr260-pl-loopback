@@ -6,19 +6,68 @@ AMD Kria KR260のJ10B Ethernet portで受信したframeを、PL内の32-bit P4Fa
 
 ## 確認済みdatapath
 
+外部hostのEthernet cableは、KR260 carrier boardの`J10B` RJ45へ接続します。`J10B`は同じboard上の`U79 DP83867`
+PHYを介してPL TEMACとRGMII接続されています。受信frameはTEMAC RXからP4Fab 32-bit boundaryへ入り、
+direct loopback後にTEMAC TXから同じPHYと`J10B`を通って外部hostへ返ります。
+
 ```text
-DP83867 PHY / RGMII
-  -> TEMAC RX AXI4-Stream (8-bit)
-  -> store-and-forward frame buffer
-  -> 8-to-32 packer
-  -> AXI4-Stream Clock Converter
-  -> P4Fab boundary (32-bit)
-  -> direct PL loopback
-  -> 32-to-8 unpacker
-  -> store-and-forward frame buffer
-  -> TEMAC TX AXI4-Stream (8-bit)
-  -> RGMII / DP83867 PHY
+                        External Ethernet host
+                            |           ^
+            1000BASE-T RX  |           |  1000BASE-T TX
+                            v           |
+                 KR260 carrier J10B RJ45 (single port)
+                            |           ^
+                            v           |
+                     U79 DP83867 PHY (single PHY)
+                            |           ^
+                   RGMII RX |           | RGMII TX
+                            v           |
++--------------------------- KR260 PL ----------------------------+
+|                                                                 |
+|  TEMAC RX AXI4-Stream (8-bit)                                   |
+|       |                                                         |
+|       v                                                         |
+|  RX store-and-forward frame buffer                              |
+|       |                                                         |
+|       v                                                         |
+|  8-to-32 packer                                                 |
+|       |                                                         |
+|       v                                                         |
+|  AXI4-Stream Clock Converter                                    |
+|       |                                                         |
+|       v                                                         |
+|  P4Fab boundary (32-bit)                                        |
+|       |                                                         |
+|       +------------- direct loopback -------------+             |
+|                                                     |             |
+|                                                     v             |
+|                                             32-to-8 unpacker     |
+|                                                     |             |
+|                                                     v             |
+|                                             TX store-and-forward |
+|                                             frame buffer         |
+|                                                     |             |
+|                                                     v             |
+|                                             TEMAC TX AXI4-Stream |
+|                                             (8-bit)              |
+|                                                     |             |
++-----------------------------------------------------|-------------+
+                                                      |
+                                                      +-- RGMII TX --^
+
+Management path to the same U79 PHY:
+
+  PS GEM2
+     |
+     +-- EMIO MDC/MDIO ------------------------> U79 DP83867
+         management-only                        management registers
+
+  PS GEM2 GMII packet signals --> gmii_idle_terminator
+  (not connected to the Ethernet packet datapath above)
 ```
+
+PS GEM2は`U79 DP83867`のMDIO managementにだけ使用します。EMIO MDC/MDIOはPHYへ接続されますが、
+GEM2のGMII packet signalsは上記Ethernet packet datapathに入らず、PL内の`gmii_idle_terminator`で終端されます。
 
 元の03m-6 checkpointでは、FCSを除く80、800、1500、1514-byte Ethernet frameのKR260実機loopbackがPASSし、1514-byte frameでも送信内容と返送内容の一致を確認しています。
 
