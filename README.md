@@ -12,48 +12,36 @@ direct loopback後にTEMAC TXから同じPHYと`J10B`を通って外部hostへ�
 
 ```text
                         External Ethernet host
-                            |           ^
-            1000BASE-T RX  |           |  1000BASE-T TX
+                            |           Λ
+             1000BASE-T RX  |           |  1000BASE-T TX
                             v           |
                  KR260 carrier J10B RJ45 (single port)
-                            |           ^
+                            |           Λ
                             v           |
                      U79 DP83867 PHY (single PHY)
-                            |           ^
+                            |           Λ
                    RGMII RX |           | RGMII TX
                             v           |
 +--------------------------- KR260 PL ----------------------------+
 |                                                                 |
-|  TEMAC RX AXI4-Stream (8-bit)                                   |
-|       |                                                         |
-|       v                                                         |
-|  RX store-and-forward frame buffer                              |
-|       |                                                         |
-|       v                                                         |
-|  8-to-32 packer                                                 |
-|       |                                                         |
-|       v                                                         |
-|  AXI4-Stream Clock Converter                                    |
-|       |                                                         |
-|       v                                                         |
-|  P4Fab boundary (32-bit)                                        |
-|       |                                                         |
-|       +------------- direct loopback -------------+             |
-|                                                     |             |
-|                                                     v             |
-|                                             32-to-8 unpacker     |
-|                                                     |             |
-|                                                     v             |
-|                                             TX store-and-forward |
-|                                             frame buffer         |
-|                                                     |             |
-|                                                     v             |
-|                                             TEMAC TX AXI4-Stream |
-|                                             (8-bit)              |
-|                                                     |             |
-+-----------------------------------------------------|-------------+
-                                                      |
-                                                      +-- RGMII TX --^
+|  TEMAC RX AXI4-Stream (8-bit)     TEMAC TX AXI4-Stream (8-bit)  |
+|       |                                        Λ                |
+|       v                                        |                |
+|  RX store-and-forward                 TX store-and-forward      |
+|   frame buffer                            frame buffer          |
+|       |                                        Λ                |
+|       v                                        |                |
+|  8-to-32 packer                         32-to-8 unpacker        |
+|       |                                        Λ                |
+|       v                                        |                |
+|  AXI4-Stream Clock Converter                   |                |
+|       |                                        |                |
+|       v                                        |                |
+|  P4Fab boundary (32-bit)                       |                |
+|       |                                        |                |
+|       +------------- direct loopback ----------+                |
+|                                                                 |
++-----------------------------------------------------------------+
 
 Management path to the same U79 PHY:
 
