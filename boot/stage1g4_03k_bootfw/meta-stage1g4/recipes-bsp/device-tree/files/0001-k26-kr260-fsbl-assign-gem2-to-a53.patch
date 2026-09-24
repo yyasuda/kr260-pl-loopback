@@ -1,0 +1,26 @@
+From: GEM2 J10B bring-up <gem2-j10b@localhost>
+Subject: [PATCH] k26: kr260: assign GEM2 to A53 in FSBL device tree
+
+Add GEM2 only to the A53 cluster address map used to generate the FSBL
+device tree and PM configuration object. Do not grant access to either
+R5 cluster or the PMU MicroBlaze.
+
+Upstream-Status: Inappropriate [product-specific permission assignment]
+
+---
+ k26-smk-kr-sdt-multidomain-cortexa53-fsbl.dts | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/k26-smk-kr-sdt-multidomain-cortexa53-fsbl.dts b/k26-smk-kr-sdt-multidomain-cortexa53-fsbl.dts
+--- a/k26-smk-kr-sdt-multidomain-cortexa53-fsbl.dts
++++ b/k26-smk-kr-sdt-multidomain-cortexa53-fsbl.dts
+@@ -80,6 +80,7 @@
+                  <0x0 0xffcc0000 &psu_efuse 0x0 0xffcc0000 0x0 0x10000>,
+                  <0x0 0xff0b0000 &gem0 0x0 0xff0b0000 0x0 0x10000>,
+                  <0x0 0xff0c0000 &gem1 0x0 0xff0c0000 0x0 0x10000>,
++                 <0x0 0xff0d0000 &gem2 0x0 0xff0d0000 0x0 0x10000>,
+                  <0x0 0xfd700000 &psu_fpd_gpv 0x0 0xfd700000 0x0 0x100000>,
+                  <0x0 0xfd610000 &psu_fpd_slcr 0x0 0xfd610000 0x0 0x80000>,
+                  <0x0 0xfd690000 &psu_fpd_slcr_secure 0x0 0xfd690000 0x0 0x40000>,
+-- 
+2.43.0
